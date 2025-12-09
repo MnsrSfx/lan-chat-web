@@ -5,6 +5,7 @@ import { compare, generateToken, authMiddleware, type AuthenticatedRequest } fro
 import { registerSchema, loginSchema, updateProfileSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { initializeWebSocket } from "./websocket";
+import { sendNewMessageNotification } from "./pushNotifications";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await storage.seedBotUsers();
@@ -191,10 +192,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const message = await storage.createMessage(req.userId!, receiverId, content);
+      
+      sendNewMessageNotification(req.userId!, receiverId, content).catch((err) => {
+        console.error("Failed to send push notification:", err);
+      });
+      
       res.json(message);
     } catch (error) {
       console.error("Send message error:", error);
       res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  app.post("/api/push-token", authMiddleware, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { pushToken } = req.body;
+      
+      if (!pushToken || typeof pushToken !== "string") {
+        return res.status(400).json({ error: "Push token is required" });
+      }
+
+      if (!pushToken.startsWith("ExponentPushToken[")) {
+        return res.status(400).json({ error: "Invalid push token format" });
+      }
+
+      await storage.updateUser(req.userId!, { pushToken });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Save push token error:", error);
+      res.status(500).json({ error: "Failed to save push token" });
+    }
+  });
+
+  app.delete("/api/push-token", authMiddleware, async (req: AuthenticatedRequest, res) => {
+    try {
+      await storage.updateUser(req.userId!, { pushToken: null as any });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete push token error:", error);
+      res.status(500).json({ error: "Failed to delete push token" });
     }
   });
 

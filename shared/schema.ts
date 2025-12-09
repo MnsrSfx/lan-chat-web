@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   lastSeen: timestamp("last_seen").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   isBot: boolean("is_bot").default(false),
+  pushToken: text("push_token"),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({

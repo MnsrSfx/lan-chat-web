@@ -6,6 +6,8 @@ import {
   Pressable,
   Image,
   Alert,
+  Switch,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -14,6 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { Colors, Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 import { getApiUrl } from "@/lib/query-client";
@@ -28,6 +31,7 @@ export default function ProfileScreen() {
   const { theme } = useTheme();
   const { user, logout } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+  const { notificationsEnabled, requestPermissions, disableNotifications } = useNotifications();
 
   const getAvatarSource = useCallback(() => {
     if (!user) return require("../../assets/avatars/avatar1.png");
@@ -64,6 +68,21 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleNotificationToggle = async (value: boolean) => {
+    if (value) {
+      if (Platform.OS === "web") {
+        Alert.alert("Notifications", "Push notifications are only available in the mobile app. Please use Expo Go on your device.");
+        return;
+      }
+      const granted = await requestPermissions();
+      if (!granted) {
+        Alert.alert("Notifications", "Please enable notifications in your device settings to receive message alerts.");
+      }
+    } else {
+      await disableNotifications();
+    }
+  };
+
   const renderSettingsItem = (
     icon: keyof typeof Feather.glyphMap,
     label: string,
@@ -83,6 +102,19 @@ export default function ProfileScreen() {
       </ThemedText>
       <Feather name="chevron-right" size={20} color={theme.textSecondary} />
     </Pressable>
+  );
+
+  const renderNotificationToggle = () => (
+    <View style={[styles.settingsItem, { backgroundColor: theme.cardBackground }]}>
+      <Feather name="bell" size={20} color={theme.text} />
+      <ThemedText style={styles.settingsLabel}>Notifications</ThemedText>
+      <Switch
+        value={notificationsEnabled}
+        onValueChange={handleNotificationToggle}
+        trackColor={{ false: theme.border, true: theme.primary }}
+        thumbColor={Platform.OS === "android" ? (notificationsEnabled ? theme.primary : theme.textSecondary) : undefined}
+      />
+    </View>
   );
 
   if (!user) return null;
@@ -148,7 +180,7 @@ export default function ProfileScreen() {
           <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
             Settings
           </ThemedText>
-          {renderSettingsItem("bell", "Notifications", () => {})}
+          {renderNotificationToggle()}
           {renderSettingsItem("globe", "Language Preferences", () => {})}
           {renderSettingsItem("shield", "Privacy", () => {})}
           {renderSettingsItem("help-circle", "Help & Support", () => {})}
