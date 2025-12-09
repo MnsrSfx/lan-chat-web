@@ -17,6 +17,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePresence } from "@/contexts/PresenceContext";
 import { Colors, Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 import { getApiUrl } from "@/lib/query-client";
@@ -31,6 +32,7 @@ export default function CommunityScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
   const { token } = useAuth();
+  const { isUserOnline } = usePresence();
   const navigation = useNavigation<NavigationProp>();
 
   const [filter, setFilter] = useState<"all" | "new" | "online">("all");
@@ -93,7 +95,7 @@ export default function CommunityScreen() {
       <View style={styles.userCardContent}>
         <View style={styles.avatarContainer}>
           <Image source={getAvatarSource(item)} style={styles.avatar} />
-          {item.isOnline && <View style={[styles.onlineIndicator, { backgroundColor: theme.online }]} />}
+          {(isUserOnline(item.id) || item.isOnline) && <View style={[styles.onlineIndicator, { backgroundColor: theme.online }]} />}
         </View>
 
         <View style={styles.userInfo}>

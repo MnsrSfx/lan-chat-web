@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { compare, generateToken, authMiddleware, type AuthenticatedRequest } from "./auth";
 import { registerSchema, loginSchema, updateProfileSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { initializeWebSocket } from "./websocket";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await storage.seedBotUsers();
@@ -364,6 +365,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+
+  initializeWebSocket(httpServer);
 
   return httpServer;
 }
