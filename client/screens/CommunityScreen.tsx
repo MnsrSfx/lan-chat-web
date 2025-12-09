@@ -17,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { VerificationBadge } from "@/components/VerificationBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePresence } from "@/contexts/PresenceContext";
@@ -50,6 +51,7 @@ interface AdvancedFilters {
   topics: string;
   minAge: number;
   maxAge: number;
+  verifiedOnly: boolean;
 }
 
 const defaultFilters: AdvancedFilters = {
@@ -60,6 +62,7 @@ const defaultFilters: AdvancedFilters = {
   topics: "",
   minAge: 18,
   maxAge: 65,
+  verifiedOnly: false,
 };
 
 export default function CommunityScreen() {
@@ -83,7 +86,8 @@ export default function CommunityScreen() {
       advancedFilters.hobbies !== "" ||
       advancedFilters.topics !== "" ||
       advancedFilters.minAge !== 18 ||
-      advancedFilters.maxAge !== 65
+      advancedFilters.maxAge !== 65 ||
+      advancedFilters.verifiedOnly
     );
   }, [advancedFilters]);
 
@@ -98,6 +102,7 @@ export default function CommunityScreen() {
     if (advancedFilters.country) params.append("country", advancedFilters.country);
     if (advancedFilters.hobbies) params.append("hobbies", advancedFilters.hobbies);
     if (advancedFilters.topics) params.append("topics", advancedFilters.topics);
+    if (advancedFilters.verifiedOnly) params.append("verifiedOnly", "true");
     return params.toString();
   }, [filter, advancedFilters]);
 
@@ -165,9 +170,16 @@ export default function CommunityScreen() {
         </View>
 
         <View style={styles.userInfo}>
-          <ThemedText style={styles.userName}>
-            {item.name}{item.age ? `, ${item.age}` : ""}
-          </ThemedText>
+          <View style={styles.userNameRow}>
+            <ThemedText style={styles.userName}>
+              {item.name}{item.age ? `, ${item.age}` : ""}
+            </ThemedText>
+            <VerificationBadge
+              isVerified={item.isVerified || false}
+              verificationLevel={(item.verificationLevel as "none" | "email" | "photo" | "id") || "none"}
+              size="small"
+            />
+          </View>
           <ThemedText style={[styles.userLanguages, { color: theme.textSecondary }]}>
             {item.nativeLanguage} {"\u2192"} {(item.learningLanguages || []).join(", ")}
           </ThemedText>
@@ -378,6 +390,32 @@ export default function CommunityScreen() {
               </View>
 
               <View style={styles.filterSection}>
+                <Pressable
+                  style={[
+                    styles.verifiedToggle,
+                    {
+                      backgroundColor: tempFilters.verifiedOnly ? theme.primary : theme.backgroundSecondary,
+                    },
+                  ]}
+                  onPress={() => setTempFilters({ ...tempFilters, verifiedOnly: !tempFilters.verifiedOnly })}
+                >
+                  <Feather
+                    name="shield"
+                    size={18}
+                    color={tempFilters.verifiedOnly ? "#FFFFFF" : theme.text}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.verifiedToggleText,
+                      { color: tempFilters.verifiedOnly ? "#FFFFFF" : theme.text },
+                    ]}
+                  >
+                    Verified Users Only
+                  </ThemedText>
+                </Pressable>
+              </View>
+
+              <View style={styles.filterSection}>
                 <ThemedText style={[styles.filterLabel, { color: theme.textSecondary }]}>
                   Age Range: {tempFilters.minAge} - {tempFilters.maxAge}
                 </ThemedText>
@@ -516,10 +554,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.lg,
   },
+  userNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
   userName: {
     ...Typography.body,
     fontWeight: "600",
-    marginBottom: Spacing.xs,
   },
   userLanguages: {
     ...Typography.small,
@@ -646,5 +689,18 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     alignItems: "center",
     justifyContent: "center",
+  },
+  verifiedToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+    gap: Spacing.sm,
+  },
+  verifiedToggleText: {
+    ...Typography.body,
+    fontWeight: "500",
   },
 });

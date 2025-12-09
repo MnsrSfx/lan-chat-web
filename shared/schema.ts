@@ -23,6 +23,8 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   isBot: boolean("is_bot").default(false),
   pushToken: text("push_token"),
+  isVerified: boolean("is_verified").default(false),
+  verificationLevel: text("verification_level").default("none"),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({

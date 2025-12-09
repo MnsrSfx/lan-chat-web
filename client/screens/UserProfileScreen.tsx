@@ -14,6 +14,7 @@ import { useNavigation, useRoute, type RouteProp } from "@react-navigation/nativ
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { VerificationBadge, SafetyIndicator } from "@/components/VerificationBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
@@ -189,9 +190,29 @@ export default function UserProfileScreen() {
         )}
 
         <View style={styles.profileInfo}>
-          <ThemedText style={styles.userName}>
-            {user.name}{user.age ? `, ${user.age}` : ""}
-          </ThemedText>
+          <View style={styles.nameRow}>
+            <ThemedText style={styles.userName}>
+              {user.name}{user.age ? `, ${user.age}` : ""}
+            </ThemedText>
+            {user.isVerified && user.verificationLevel && user.verificationLevel !== "none" ? (
+              <VerificationBadge
+                isVerified={true}
+                verificationLevel={(user.verificationLevel as "none" | "email" | "photo" | "id")}
+                size="medium"
+              />
+            ) : null}
+          </View>
+
+          {user.isVerified && user.verificationLevel && user.verificationLevel !== "none" ? (
+            <View style={styles.verificationLabelContainer}>
+              <VerificationBadge
+                isVerified={true}
+                verificationLevel={(user.verificationLevel as "none" | "email" | "photo" | "id")}
+                size="medium"
+                showLabel
+              />
+            </View>
+          ) : null}
 
           {user.nativeLanguage && (
             <View style={styles.languageRow}>
@@ -219,6 +240,8 @@ export default function UserProfileScreen() {
               <ThemedText style={styles.sectionContent}>{user.topics}</ThemedText>
             </View>
           )}
+
+          <SafetyIndicator />
         </View>
       </ScrollView>
 
@@ -284,9 +307,17 @@ const styles = StyleSheet.create({
   profileInfo: {
     paddingHorizontal: Spacing.xl,
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
   userName: {
     ...Typography.h3,
-    marginBottom: Spacing.sm,
+  },
+  verificationLabelContainer: {
+    marginBottom: Spacing.md,
   },
   languageRow: {
     flexDirection: "row",

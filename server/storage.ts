@@ -14,6 +14,7 @@ export interface UserFilters {
   country?: string;
   hobbies?: string;
   topics?: string;
+  verifiedOnly?: boolean;
 }
 
 export interface IStorage {
@@ -123,6 +124,10 @@ export class DatabaseStorage implements IStorage {
     
     if (filters?.topics) {
       conditions.push(sql`LOWER(${users.topics}) LIKE LOWER(${'%' + filters.topics + '%'})`);
+    }
+    
+    if (filters?.verifiedOnly) {
+      conditions.push(eq(users.isVerified, true));
     }
     
     if (conditions.length > 0) {

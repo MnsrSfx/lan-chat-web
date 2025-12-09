@@ -114,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/users", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
-      const { online, newMembers, minAge, maxAge, nativeLanguage, learningLanguage, country, hobbies, topics } = req.query;
+      const { online, newMembers, minAge, maxAge, nativeLanguage, learningLanguage, country, hobbies, topics, verifiedOnly } = req.query;
       
       const filters: any = { excludeId: req.userId };
       
@@ -152,6 +152,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (topics) {
         filters.topics = topics as string;
+      }
+      
+      if (verifiedOnly === "true") {
+        filters.verifiedOnly = true;
       }
 
       const users = await storage.getUsers(filters);
