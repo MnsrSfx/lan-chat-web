@@ -33,6 +33,18 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MAX_PHOTOS = 4;
 
+const COUNTRIES = [
+  "United States", "United Kingdom", "Canada", "Australia", "Spain",
+  "France", "Germany", "Italy", "Brazil", "Mexico", "Japan", "China",
+  "South Korea", "India", "Russia", "Netherlands", "Sweden", "Poland",
+  "Turkey", "Vietnam", "Thailand", "Indonesia", "Philippines", "Argentina",
+  "Colombia", "Peru", "Chile", "Portugal", "Belgium", "Switzerland",
+  "Austria", "Ireland", "New Zealand", "Singapore", "Malaysia", "Taiwan",
+  "Hong Kong", "South Africa", "Egypt", "Morocco", "Nigeria", "Kenya",
+  "Saudi Arabia", "United Arab Emirates", "Israel", "Greece", "Czech Republic",
+  "Hungary", "Romania", "Ukraine", "Finland", "Norway", "Denmark",
+];
+
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -44,6 +56,7 @@ export default function EditProfileScreen() {
   const [age, setAge] = useState(user?.age?.toString() || "");
   const [hobbies, setHobbies] = useState(user?.hobbies || "");
   const [topics, setTopics] = useState(user?.topics || "");
+  const [country, setCountry] = useState(user?.country || "");
   const [photos, setPhotos] = useState<string[]>(user?.photos || []);
   const [avatarIndex, setAvatarIndex] = useState(user?.avatarIndex || 0);
   const [nativeLanguage, setNativeLanguage] = useState(user?.nativeLanguage || "");
@@ -53,6 +66,7 @@ export default function EditProfileScreen() {
   const [isUploading, setIsUploading] = useState(false);
   const [showNativeLanguageModal, setShowNativeLanguageModal] = useState(false);
   const [showLearningLanguageModal, setShowLearningLanguageModal] = useState(false);
+  const [showCountryModal, setShowCountryModal] = useState(false);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -71,7 +85,7 @@ export default function EditProfileScreen() {
         </HeaderButton>
       ),
     });
-  }, [navigation, isSaving, name, age, hobbies, topics, photos, avatarIndex, nativeLanguage, learningLanguages]);
+  }, [navigation, isSaving, name, age, hobbies, topics, country, photos, avatarIndex, nativeLanguage, learningLanguages]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -86,6 +100,7 @@ export default function EditProfileScreen() {
         age: age ? parseInt(age, 10) : undefined,
         hobbies: hobbies.trim() || undefined,
         topics: topics.trim() || undefined,
+        country: country.trim() || undefined,
         photos,
         avatarIndex,
         nativeLanguage: nativeLanguage || undefined,
@@ -311,6 +326,22 @@ export default function EditProfileScreen() {
           />
         </View>
 
+        <View style={styles.inputGroup}>
+          <ThemedText style={[styles.inputLabel, { color: theme.textSecondary }]}>Country</ThemedText>
+          <Pressable
+            style={({ pressed }) => [
+              styles.languageSelector,
+              { backgroundColor: theme.inputBackground, opacity: pressed ? 0.8 : 1, marginBottom: 0 },
+            ]}
+            onPress={() => setShowCountryModal(true)}
+          >
+            <ThemedText style={{ color: country ? theme.text : theme.textSecondary }}>
+              {country || "Select your country"}
+            </ThemedText>
+            <Feather name="chevron-down" size={20} color={theme.textSecondary} />
+          </Pressable>
+        </View>
+
         <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           Languages
         </ThemedText>
@@ -406,6 +437,41 @@ export default function EditProfileScreen() {
         true,
         "Languages to Learn (max 3)"
       )}
+
+      <Modal visible={showCountryModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Select Country</ThemedText>
+              <Pressable onPress={() => setShowCountryModal(false)}>
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.languageList}>
+              {COUNTRIES.map((c) => {
+                const isSelected = country === c;
+                return (
+                  <Pressable
+                    key={c}
+                    style={({ pressed }) => [
+                      styles.languageItem,
+                      isSelected && { backgroundColor: theme.primary + "20" },
+                      { opacity: pressed ? 0.8 : 1 },
+                    ]}
+                    onPress={() => {
+                      setCountry(c);
+                      setShowCountryModal(false);
+                    }}
+                  >
+                    <ThemedText style={styles.languageItemText}>{c}</ThemedText>
+                    {isSelected ? <Feather name="check" size={20} color={theme.primary} /> : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }

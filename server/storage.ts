@@ -3,12 +3,25 @@ import { db } from "./db";
 import { eq, and, or, desc, sql, ne, notInArray, gte } from "drizzle-orm";
 import { hash, compare } from "./auth";
 
+export interface UserFilters {
+  excludeId?: string;
+  isOnline?: boolean;
+  isNew?: boolean;
+  minAge?: number;
+  maxAge?: number;
+  nativeLanguage?: string;
+  learningLanguage?: string;
+  country?: string;
+  hobbies?: string;
+  topics?: string;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
-  getUsers(filters?: { excludeId?: string; isOnline?: boolean; isNew?: boolean; minAge?: number; maxAge?: number }): Promise<User[]>;
+  getUsers(filters?: UserFilters): Promise<User[]>;
   
   getMessages(userId1: string, userId2: string): Promise<Message[]>;
   createMessage(senderId: string, receiverId: string, content: string): Promise<Message>;
@@ -58,7 +71,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUsers(filters?: { excludeId?: string; isOnline?: boolean; isNew?: boolean; minAge?: number; maxAge?: number }): Promise<User[]> {
+  async getUsers(filters?: UserFilters): Promise<User[]> {
     let query = db.select().from(users);
     
     const conditions = [];
@@ -85,11 +98,31 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters?.minAge !== undefined) {
-      conditions.push(gte(users.age, filters.minAge));
+      conditions.push(or(sql`${users.age} IS NULL`, gte(users.age, filters.minAge)));
     }
     
     if (filters?.maxAge !== undefined) {
-      conditions.push(sql`${users.age} <= ${filters.maxAge}`);
+      conditions.push(or(sql`${users.age} IS NULL`, sql`${users.age} <= ${filters.maxAge}`));
+    }
+    
+    if (filters?.nativeLanguage) {
+      conditions.push(sql`LOWER(${users.nativeLanguage}) = LOWER(${filters.nativeLanguage})`);
+    }
+    
+    if (filters?.learningLanguage) {
+      conditions.push(sql`${users.learningLanguages}::jsonb @> ${JSON.stringify([filters.learningLanguage])}::jsonb`);
+    }
+    
+    if (filters?.country) {
+      conditions.push(sql`LOWER(${users.country}) = LOWER(${filters.country})`);
+    }
+    
+    if (filters?.hobbies) {
+      conditions.push(sql`LOWER(${users.hobbies}) LIKE LOWER(${'%' + filters.hobbies + '%'})`);
+    }
+    
+    if (filters?.topics) {
+      conditions.push(sql`LOWER(${users.topics}) LIKE LOWER(${'%' + filters.topics + '%'})`);
     }
     
     if (conditions.length > 0) {

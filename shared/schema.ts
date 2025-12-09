@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   learningLanguages: jsonb("learning_languages").$type<string[]>().default([]),
   hobbies: text("hobbies"),
   topics: text("topics"),
+  country: text("country"),
   photos: jsonb("photos").$type<string[]>().default([]),
   avatarIndex: integer("avatar_index").default(0),
   isOnline: boolean("is_online").default(false),
@@ -132,6 +133,7 @@ export const updateProfileSchema = z.object({
   learningLanguages: z.array(z.string()).optional(),
   hobbies: z.string().optional(),
   topics: z.string().optional(),
+  country: z.string().optional(),
   photos: z.array(z.string()).optional(),
   avatarIndex: z.number().min(0).max(3).optional(),
 });
