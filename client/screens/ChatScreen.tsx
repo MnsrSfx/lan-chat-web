@@ -20,6 +20,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCall } from "@/contexts/CallContext";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 import { getApiUrl } from "@/lib/query-client";
@@ -39,6 +40,7 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { token, user: currentUser } = useAuth();
+  const { initiateCall } = useCall();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ChatRouteProp>();
   const queryClient = useQueryClient();
@@ -66,8 +68,24 @@ export default function ChatScreen() {
           </View>
         </Pressable>
       ),
+      headerRight: () => (
+        <View style={styles.headerButtons}>
+          <Pressable
+            style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => initiateCall(chatUser, 'voice')}
+          >
+            <Feather name="phone" size={20} color={theme.primary} />
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => initiateCall(chatUser, 'video')}
+          >
+            <Feather name="video" size={20} color={theme.primary} />
+          </Pressable>
+        </View>
+      ),
     });
-  }, [navigation, chatUser, theme]);
+  }, [navigation, chatUser, theme, initiateCall]);
 
   const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey: ["/api/messages", chatUser.id],
@@ -376,6 +394,14 @@ const styles = StyleSheet.create({
   },
   headerStatus: {
     ...Typography.caption,
+  },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  headerButton: {
+    padding: Spacing.sm,
   },
   messageList: {
     padding: Spacing.lg,

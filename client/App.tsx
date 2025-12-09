@@ -14,6 +14,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PresenceProvider } from "@/contexts/PresenceContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { CallProvider } from "@/contexts/CallContext";
 
 export default function App() {
   return (
@@ -22,16 +23,18 @@ export default function App() {
         <AuthProvider>
           <NotificationProvider>
             <PresenceProvider>
-              <SafeAreaProvider>
-                <GestureHandlerRootView style={styles.root}>
-                  <KeyboardProvider>
-                    <NavigationContainer>
-                      <RootStackNavigator />
-                    </NavigationContainer>
-                    <StatusBar style="auto" />
-                  </KeyboardProvider>
-                </GestureHandlerRootView>
-              </SafeAreaProvider>
+              <CallProvider>
+                <SafeAreaProvider>
+                  <GestureHandlerRootView style={styles.root}>
+                    <KeyboardProvider>
+                      <NavigationContainer>
+                        <RootStackNavigator />
+                      </NavigationContainer>
+                      <StatusBar style="auto" />
+                    </KeyboardProvider>
+                  </GestureHandlerRootView>
+                </SafeAreaProvider>
+              </CallProvider>
             </PresenceProvider>
           </NotificationProvider>
         </AuthProvider>

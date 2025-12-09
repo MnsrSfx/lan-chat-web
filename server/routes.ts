@@ -5,6 +5,7 @@ import { compare, generateToken, authMiddleware, type AuthenticatedRequest } fro
 import { registerSchema, loginSchema, updateProfileSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { initializeWebSocket } from "./websocket";
+import { initializeCallWebSocket } from "./callWebsocket";
 import { sendNewMessageNotification } from "./pushNotifications";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -427,6 +428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   initializeWebSocket(httpServer);
+  initializeCallWebSocket(httpServer);
 
   return httpServer;
 }
