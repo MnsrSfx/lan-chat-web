@@ -1,7 +1,10 @@
 import { randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import { createRequire } from "module";
 import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+
+const require = createRequire(import.meta.url);
+const jwt = require("jsonwebtoken");
 
 const scryptAsync = promisify(scrypt);
 
