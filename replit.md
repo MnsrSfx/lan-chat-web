@@ -70,3 +70,19 @@ Located in `shared/schema.ts`:
 - `npm run server:dev`: Start Express backend in development
 - `npm run all:dev`: Run both Expo and server concurrently
 - `npm run db:push`: Push schema changes to database
+
+## Web Deployment
+
+### Static Build for Production
+The app supports direct browser access without requiring Expo Go:
+- **Build Script**: `scripts/build.js` generates static bundles for iOS, Android, and Web platforms
+- **Web Bundle**: Stored in `static-build/web/` with auto-generated `index.html`
+- **SPA Routing**: Server serves web index.html for all non-API routes (SPA history fallback)
+
+### Server Routing
+- Browser requests without `expo-platform` header receive the web SPA
+- Expo Go requests with `expo-platform: ios/android` receive platform-specific manifests
+- API routes (`/api/*`) and WebSocket routes (`/ws/*`) bypass static file serving
+
+### Deployment URL
+- Production: `https://lan-chat.replit.app` (direct browser access)
