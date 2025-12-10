@@ -460,7 +460,8 @@ function updateBundleUrls(timestamp, baseUrl) {
 
   updateForPlatform("ios");
   updateForPlatform("android");
-  updateForPlatform("web");
+  // Skip web bundle URL update - web bundles handle assets differently
+  // and don't use the Metro-specific unstable_path query parameter
   console.log("Updated bundle URLs");
 }
 

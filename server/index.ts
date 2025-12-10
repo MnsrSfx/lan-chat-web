@@ -221,6 +221,26 @@ function configureExpoAndLanding(app: express.Application) {
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
   app.use(express.static(path.resolve(process.cwd(), "static-build")));
 
+  // SPA fallback for deep links - serve web index.html for all non-API routes
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/ws")) {
+      return next();
+    }
+    
+    // Skip if it's an expo-platform request
+    const platform = req.header("expo-platform");
+    if (platform && (platform === "ios" || platform === "android")) {
+      return next();
+    }
+    
+    // Serve web index.html for SPA routing
+    if (serveWebApp(res)) {
+      return;
+    }
+    
+    next();
+  });
+
   log("Expo routing: Checking expo-platform header on / and /manifest");
 }
 
