@@ -136,7 +136,7 @@ async function startMetro() {
 
 async function downloadFile(url, outputPath) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 120_000);
+  const timeoutId = setTimeout(() => controller.abort(), 600_000);
 
   try {
     console.log(`Downloading: ${url}`);
@@ -161,7 +161,7 @@ async function downloadFile(url, outputPath) {
     }
 
     if (error.name === "AbortError") {
-      throw new Error(`Download timeout after 2m: ${url}`);
+      throw new Error(`Download timeout after 10m: ${url}`);
     }
     throw error;
   } finally {
@@ -174,7 +174,7 @@ async function downloadBundle(platform, timestamp) {
   url.searchParams.set("platform", platform);
   url.searchParams.set("dev", "false");
   url.searchParams.set("hot", "false");
-  url.searchParams.set("lazy", "false");
+  url.searchParams.set("lazy", "true");
   url.searchParams.set("minify", "true");
 
   const output = path.join(
@@ -490,7 +490,7 @@ async function main() {
 
   await startMetro();
 
-  const downloadTimeout = 300000;
+  const downloadTimeout = 900000;
   const downloadPromise = downloadBundlesAndManifests(timestamp);
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
