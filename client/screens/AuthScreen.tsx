@@ -69,7 +69,7 @@ export default function AuthScreen() {
       >
         <View style={styles.header}>
           <Image
-            source={require("../../assets/images/icon.png")}
+            source={require("../../assets/images/lanchat-logo.jpg")}
             style={styles.logo}
           />
           <ThemedText style={[styles.title, { color: theme.primary }]}>
@@ -170,9 +170,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["4xl"],
   },
   logo: {
-    width: 100,
-    height: 100,
-    borderRadius: BorderRadius.lg,
+    width: 140,
+    height: 140,
+    borderRadius: BorderRadius["2xl"],
     marginBottom: Spacing.xl,
   },
   title: {
