@@ -7,6 +7,7 @@ export interface UserFilters {
   excludeId?: string;
   isOnline?: boolean;
   isNew?: boolean;
+  search?: string;
   minAge?: number;
   maxAge?: number;
   nativeLanguage?: string;
@@ -124,6 +125,10 @@ export class DatabaseStorage implements IStorage {
     
     if (filters?.topics) {
       conditions.push(sql`LOWER(${users.topics}) LIKE LOWER(${'%' + filters.topics + '%'})`);
+    }
+    
+    if (filters?.search) {
+      conditions.push(sql`LOWER(${users.name}) LIKE LOWER(${'%' + filters.search + '%'})`);
     }
     
     if (filters?.verifiedOnly) {

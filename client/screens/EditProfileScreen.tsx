@@ -16,7 +16,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { HeaderButton } from "@react-navigation/elements";
 import * as ImagePicker from "expo-image-picker";
-import { File } from "expo-file-system";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
@@ -131,35 +130,62 @@ export default function EditProfileScreen() {
       setIsUploading(true);
       try {
         const asset = result.assets[0];
-        const formData = new FormData();
-        const file = new File(asset.uri);
-        formData.append("file", file);
-
-        const uploadResponse = await fetch(
+        
+        // Step 1: Get signed upload URL from server
+        const uploadUrlResponse = await fetch(
           new URL("/api/objects/upload", getApiUrl()).toString(),
           {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
-            body: formData,
           }
         );
 
-        if (!uploadResponse.ok) {
-          throw new Error("Upload failed");
+        if (!uploadUrlResponse.ok) {
+          throw new Error("Failed to get upload URL");
         }
 
-        const { path } = await uploadResponse.json();
+        const { uploadURL } = await uploadUrlResponse.json();
 
-        const newPhotos = [...photos];
-        if (index < photos.length) {
-          newPhotos[index] = path;
-        } else {
-          newPhotos.push(path);
+        // Step 2: Upload file to signed URL using fetch with blob
+        const fileResponse = await fetch(asset.uri);
+        const fileBlob = await fileResponse.blob();
+        
+        const uploadResult = await fetch(uploadURL, {
+          method: "PUT",
+          body: fileBlob,
+          headers: {
+            "Content-Type": asset.mimeType || "image/jpeg",
+          },
+        });
+
+        if (uploadResult.status !== 200) {
+          throw new Error("Upload to storage failed");
         }
-        setPhotos(newPhotos);
+
+        // Step 3: Register photo with the server
+        const photoResponse = await fetch(
+          new URL("/api/profile-photos", getApiUrl()).toString(),
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ photoURL: uploadURL }),
+          }
+        );
+
+        if (!photoResponse.ok) {
+          throw new Error("Failed to save photo");
+        }
+
+        const { objectPath, photos: updatedPhotos } = await photoResponse.json();
+        
+        setPhotos(updatedPhotos);
         
         await refreshUser();
       } catch (error) {
+        console.error("Upload error:", error);
         Alert.alert("Upload Failed", "Failed to upload photo. Please try again.");
       } finally {
         setIsUploading(false);

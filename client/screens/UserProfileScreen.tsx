@@ -17,6 +17,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { VerificationBadge, SafetyIndicator } from "@/components/VerificationBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCall } from "@/contexts/CallContext";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 import { getApiUrl } from "@/lib/query-client";
@@ -33,6 +34,7 @@ export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { token } = useAuth();
+  const { initiateCall } = useCall();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ProfileRouteProp>();
   const queryClient = useQueryClient();
@@ -246,16 +248,38 @@ export default function UserProfileScreen() {
       </ScrollView>
 
       <View style={[styles.actionBar, { paddingBottom: insets.bottom + Spacing.lg, backgroundColor: theme.backgroundRoot }]}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.startChatButton,
-            { backgroundColor: theme.primary, opacity: pressed ? 0.9 : 1 },
-          ]}
-          onPress={handleStartChat}
-        >
-          <Feather name="message-circle" size={20} color="#FFFFFF" />
-          <ThemedText style={styles.startChatText}>Start Chat</ThemedText>
-        </Pressable>
+        <View style={styles.mainActions}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.callButton,
+              { backgroundColor: theme.success, opacity: pressed ? 0.9 : 1 },
+            ]}
+            onPress={() => user && initiateCall(user, 'voice')}
+          >
+            <Feather name="phone" size={20} color="#FFFFFF" />
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.startChatButton,
+              { backgroundColor: theme.primary, opacity: pressed ? 0.9 : 1 },
+            ]}
+            onPress={handleStartChat}
+          >
+            <Feather name="message-circle" size={20} color="#FFFFFF" />
+            <ThemedText style={styles.startChatText}>Chat</ThemedText>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.callButton,
+              { backgroundColor: "#5865F2", opacity: pressed ? 0.9 : 1 },
+            ]}
+            onPress={() => user && initiateCall(user, 'video')}
+          >
+            <Feather name="video" size={20} color="#FFFFFF" />
+          </Pressable>
+        </View>
 
         <View style={styles.secondaryActions}>
           <Pressable
@@ -347,7 +371,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "transparent",
   },
+  mainActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.md,
+  },
+  callButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   startChatButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

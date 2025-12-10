@@ -115,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/users", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
-      const { online, newMembers, minAge, maxAge, nativeLanguage, learningLanguage, country, hobbies, topics, verifiedOnly } = req.query;
+      const { online, newMembers, search, minAge, maxAge, nativeLanguage, learningLanguage, country, hobbies, topics, verifiedOnly } = req.query;
       
       const filters: any = { excludeId: req.userId };
       
@@ -125,6 +125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (newMembers === "true") {
         filters.isNew = true;
+      }
+      
+      if (search) {
+        filters.search = (search as string).toLowerCase();
       }
       
       if (minAge) {

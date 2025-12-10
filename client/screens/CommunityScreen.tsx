@@ -74,6 +74,7 @@ export default function CommunityScreen() {
   const navigation = useNavigation<NavigationProp>();
 
   const [filter, setFilter] = useState<"all" | "new" | "online">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(defaultFilters);
   const [tempFilters, setTempFilters] = useState<AdvancedFilters>(defaultFilters);
@@ -95,6 +96,7 @@ export default function CommunityScreen() {
     const params = new URLSearchParams();
     if (filter === "online") params.append("online", "true");
     if (filter === "new") params.append("newMembers", "true");
+    if (searchQuery.trim()) params.append("search", searchQuery.trim());
     if (advancedFilters.minAge > 18) params.append("minAge", advancedFilters.minAge.toString());
     if (advancedFilters.maxAge < 65) params.append("maxAge", advancedFilters.maxAge.toString());
     if (advancedFilters.nativeLanguage) params.append("nativeLanguage", advancedFilters.nativeLanguage);
@@ -104,10 +106,10 @@ export default function CommunityScreen() {
     if (advancedFilters.topics) params.append("topics", advancedFilters.topics);
     if (advancedFilters.verifiedOnly) params.append("verifiedOnly", "true");
     return params.toString();
-  }, [filter, advancedFilters]);
+  }, [filter, advancedFilters, searchQuery]);
 
   const { data: users = [], isLoading, refetch, isRefetching } = useQuery<User[]>({
-    queryKey: ["/api/users", filter, JSON.stringify(advancedFilters)],
+    queryKey: ["/api/users", filter, searchQuery, JSON.stringify(advancedFilters)],
     queryFn: async () => {
       const queryParams = buildQueryParams();
       const url = new URL(`/api/users${queryParams ? `?${queryParams}` : ""}`, getApiUrl());
@@ -259,6 +261,24 @@ export default function CommunityScreen() {
         >
           <Feather name="sliders" size={20} color={hasActiveFilters ? "#FFFFFF" : theme.text} />
         </Pressable>
+      </View>
+
+      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundSecondary }]}>
+        <Feather name="search" size={18} color={theme.textSecondary} style={styles.searchIcon} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.text }]}
+          placeholder="Search by name..."
+          placeholderTextColor={theme.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {searchQuery.length > 0 ? (
+          <Pressable onPress={() => setSearchQuery("")} style={styles.clearButton}>
+            <Feather name="x-circle" size={18} color={theme.textSecondary} />
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={styles.filterBar}>
@@ -514,6 +534,26 @@ const styles = StyleSheet.create({
   filterChipText: {
     ...Typography.small,
     fontWeight: "500",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.lg,
+    height: 44,
+  },
+  searchIcon: {
+    marginRight: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    ...Typography.body,
+  },
+  clearButton: {
+    padding: Spacing.xs,
   },
   loadingContainer: {
     flex: 1,
