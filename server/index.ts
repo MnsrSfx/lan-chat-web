@@ -165,6 +165,17 @@ function serveLandingPage({
   res.status(200).send(html);
 }
 
+function serveWebApp(res: Response) {
+  const webIndexPath = path.resolve(process.cwd(), "static-build", "web", "index.html");
+  
+  if (fs.existsSync(webIndexPath)) {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(webIndexPath);
+    return true;
+  }
+  return false;
+}
+
 function configureExpoAndLanding(app: express.Application) {
   const templatePath = path.resolve(
     process.cwd(),
@@ -192,6 +203,10 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     if (req.path === "/") {
+      // Try to serve web app first, fallback to landing page
+      if (serveWebApp(res)) {
+        return;
+      }
       return serveLandingPage({
         req,
         res,

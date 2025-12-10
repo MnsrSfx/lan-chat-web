@@ -28,6 +28,15 @@ function setupSignalHandlers() {
   process.on("SIGHUP", cleanup);
 }
 
+function getAppName() {
+  try {
+    const appJson = JSON.parse(fs.readFileSync("app.json", "utf-8"));
+    return appJson.expo?.name || "LanChat";
+  } catch {
+    return "LanChat";
+  }
+}
+
 function getDeploymentUrl() {
   if (process.env.REPLIT_INTERNAL_APP_DOMAIN) {
     const url = `https://${process.env.REPLIT_INTERNAL_APP_DOMAIN}`;
@@ -57,8 +66,10 @@ function prepareDirectories(timestamp) {
   const dirs = [
     path.join("static-build", timestamp, "_expo", "static", "js", "ios"),
     path.join("static-build", timestamp, "_expo", "static", "js", "android"),
+    path.join("static-build", timestamp, "_expo", "static", "js", "web"),
     path.join("static-build", "ios"),
     path.join("static-build", "android"),
+    path.join("static-build", "web"),
   ];
 
   for (const dir of dirs) {
@@ -230,6 +241,7 @@ async function downloadBundlesAndManifests(timestamp) {
     const results = await Promise.allSettled([
       downloadBundle("ios", timestamp),
       downloadBundle("android", timestamp),
+      downloadBundle("web", timestamp),
       downloadManifest("ios"),
       downloadManifest("android"),
     ]);
@@ -243,6 +255,7 @@ async function downloadBundlesAndManifests(timestamp) {
         const names = [
           "iOS bundle",
           "Android bundle",
+          "Web bundle",
           "iOS manifest",
           "Android manifest",
         ];
@@ -253,9 +266,9 @@ async function downloadBundlesAndManifests(timestamp) {
     }
 
     const iosManifest =
-      results[2].status === "fulfilled" ? results[2].value : null;
-    const androidManifest =
       results[3].status === "fulfilled" ? results[3].value : null;
+    const androidManifest =
+      results[4].status === "fulfilled" ? results[4].value : null;
 
     console.log("All downloads completed successfully");
     return { ios: iosManifest, android: androidManifest };
@@ -329,6 +342,21 @@ function extractAssets(timestamp) {
 
   extractFromBundle(bundles.ios, "ios");
   extractFromBundle(bundles.android, "android");
+  
+  // Web bundle may have different asset handling, extract if exists
+  const webBundlePath = path.join(
+    "static-build",
+    timestamp,
+    "_expo",
+    "static",
+    "js",
+    "web",
+    "bundle.js",
+  );
+  if (fs.existsSync(webBundlePath)) {
+    const webBundle = fs.readFileSync(webBundlePath, "utf-8");
+    extractFromBundle(webBundle, "web");
+  }
 
   return Array.from(assetsMap.values());
 }
@@ -432,7 +460,81 @@ function updateBundleUrls(timestamp, baseUrl) {
 
   updateForPlatform("ios");
   updateForPlatform("android");
+  updateForPlatform("web");
   console.log("Updated bundle URLs");
+}
+
+function createWebIndexHtml(timestamp, baseUrl, appName) {
+  const bundleUrl = `${baseUrl}/${timestamp}/_expo/static/js/web/bundle.js`;
+  
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="${appName}" />
+  <title>${appName}</title>
+  <style>
+    html, body, #root {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body, #root {
+        background-color: #000;
+      }
+    }
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 16px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e5e5e5;
+      border-top-color: #007AFF;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @media (prefers-color-scheme: dark) {
+      .spinner {
+        border-color: #333;
+        border-top-color: #0A84FF;
+      }
+      #loading p { color: #999; }
+    }
+    #loading p { color: #666; font-size: 14px; margin: 0; }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div id="loading">
+      <div class="spinner"></div>
+      <p>Loading ${appName}...</p>
+    </div>
+  </div>
+  <script src="${bundleUrl}"></script>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join("static-build", "web", "index.html"), html);
+  console.log("Web index.html created");
 }
 
 function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
@@ -525,6 +627,10 @@ async function main() {
 
   console.log("Updating manifests and creating landing page...");
   updateManifests(manifests, timestamp, baseUrl, assetsByHash);
+  
+  console.log("Creating web index.html...");
+  const appName = getAppName();
+  createWebIndexHtml(timestamp, baseUrl, appName);
 
   console.log("Build complete! Deploy to:", baseUrl);
 
