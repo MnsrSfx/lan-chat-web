@@ -466,7 +466,8 @@ function updateBundleUrls(timestamp, baseUrl) {
 }
 
 function createWebIndexHtml(timestamp, baseUrl, appName) {
-  const bundleUrl = `${baseUrl}/${timestamp}/_expo/static/js/web/bundle.js`;
+  // Use relative URL for web bundle so it works on any domain
+  const bundleUrl = `/${timestamp}/_expo/static/js/web/bundle.js`;
   
   const html = `<!DOCTYPE html>
 <html lang="en">
