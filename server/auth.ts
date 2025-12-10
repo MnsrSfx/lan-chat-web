@@ -1,7 +1,7 @@
 import { randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import type { Request, Response, NextFunction } from "express";
-import { sign, verify } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 const scryptAsync = promisify(scrypt);
 
@@ -21,12 +21,12 @@ export async function compare(password: string, storedHash: string): Promise<boo
 }
 
 export function generateToken(userId: string): string {
-  return sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): { userId: string } | null {
   try {
-    return verify(token, JWT_SECRET) as { userId: string };
+    return jwt.verify(token, JWT_SECRET) as { userId: string };
   } catch {
     return null;
   }
