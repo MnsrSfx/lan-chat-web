@@ -1,0 +1,105 @@
+{
+  "id": "0ad83707-4d6f-42bb-8e05-208c463e9ce7",
+  "createdAt": "2025-12-10T01:26:01.916Z",
+  "runtimeVersion": "exposdk:54.0.0",
+  "launchAsset": {
+    "key": "bundle-1765329961916-17444",
+    "contentType": "application/javascript",
+    "url": "https://6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/1765329961916-17444/_expo/static/js/android/bundle.js"
+  },
+  "assets": [],
+  "metadata": {},
+  "extra": {
+    "eas": {},
+    "expoClient": {
+      "name": "LanChat",
+      "slug": "lanchat",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "icon": "./assets/images/icon.png",
+      "scheme": "lanchat",
+      "userInterfaceStyle": "automatic",
+      "newArchEnabled": true,
+      "ios": {
+        "supportsTablet": true,
+        "bundleIdentifier": "com.lanchat.app"
+      },
+      "android": {
+        "adaptiveIcon": {
+          "backgroundColor": "#4A90E2",
+          "foregroundImage": "./assets/images/android-icon-foreground.png",
+          "backgroundImage": "./assets/images/android-icon-background.png",
+          "monochromeImage": "./assets/images/android-icon-monochrome.png",
+          "foregroundImageUrl": "https://6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/assets/./assets/images/android-icon-foreground.png",
+          "monochromeImageUrl": "https://6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/assets/./assets/images/android-icon-monochrome.png",
+          "backgroundImageUrl": "https://6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/assets/./assets/images/android-icon-background.png"
+        },
+        "edgeToEdgeEnabled": true,
+        "predictiveBackGestureEnabled": false,
+        "package": "com.lanchat.app"
+      },
+      "web": {
+        "output": "single",
+        "favicon": "./assets/images/favicon.png"
+      },
+      "plugins": [
+        [
+          "expo-splash-screen",
+          {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 200,
+            "resizeMode": "contain",
+            "backgroundColor": "#4A90E2",
+            "dark": {
+              "backgroundColor": "#1F2123"
+            }
+          }
+        ],
+        "expo-web-browser"
+      ],
+      "experiments": {
+        "reactCompiler": true
+      },
+      "_internal": {
+        "isDebug": false,
+        "projectRoot": "/home/runner/workspace",
+        "dynamicConfigPath": {},
+        "staticConfigPath": "/home/runner/workspace/app.json",
+        "packageJsonPath": "/home/runner/workspace/package.json",
+        "pluginHistory": {
+          "expo-splash-screen": {
+            "name": "expo-splash-screen",
+            "version": "31.0.12"
+          },
+          "expo-web-browser": {
+            "name": "expo-web-browser",
+            "version": "15.0.10"
+          }
+        }
+      },
+      "sdkVersion": "54.0.0",
+      "platforms": [
+        "ios",
+        "android",
+        "web"
+      ],
+      "androidStatusBar": {
+        "backgroundColor": "#4A90E2"
+      },
+      "iconUrl": "https://6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/assets/./assets/images/icon.png",
+      "hostUri": "6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/android"
+    },
+    "expoGo": {
+      "debuggerHost": "6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/android",
+      "developer": {
+        "tool": "expo-cli",
+        "projectRoot": "/home/runner/workspace"
+      },
+      "packagerOpts": {
+        "dev": false
+      },
+      "mainModuleName": "client/index"
+    },
+    "scopeKey": "@anonymous/lanchat-cd947f0a-db9d-4979-9dc8-aa7bd50432fb"
+  }
+}
