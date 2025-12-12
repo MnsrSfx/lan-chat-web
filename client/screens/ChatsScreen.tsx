@@ -100,7 +100,7 @@ export default function ChatsScreen() {
     >
       <View style={styles.avatarContainer}>
         <Image source={getAvatarSource(item.user)} style={styles.avatar} />
-        {(isUserOnline(item.user.id) || item.user.isOnline) && <View style={[styles.onlineIndicator, { backgroundColor: theme.online }]} />}
+        {isUserOnline(item.user.id) && <View style={[styles.onlineIndicator, { backgroundColor: theme.online }]} />}
       </View>
 
       <View style={styles.conversationInfo}>

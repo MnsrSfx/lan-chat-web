@@ -16,6 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { HeaderButton } from "@react-navigation/elements";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
@@ -146,13 +147,10 @@ export default function EditProfileScreen() {
 
         const { uploadURL } = await uploadUrlResponse.json();
 
-        // Step 2: Upload file to signed URL using fetch with blob
-        const fileResponse = await fetch(asset.uri);
-        const fileBlob = await fileResponse.blob();
-        
-        const uploadResult = await fetch(uploadURL, {
-          method: "PUT",
-          body: fileBlob,
+        // Step 2: Upload file to signed URL using expo-file-system uploadAsync
+        const uploadResult = await FileSystem.uploadAsync(uploadURL, asset.uri, {
+          httpMethod: "PUT",
+          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
           headers: {
             "Content-Type": asset.mimeType || "image/jpeg",
           },

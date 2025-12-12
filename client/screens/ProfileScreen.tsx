@@ -182,7 +182,7 @@ export default function ProfileScreen() {
           </ThemedText>
           {renderNotificationToggle()}
           {renderSettingsItem("globe", "Language Preferences", () => {})}
-          {renderSettingsItem("shield", "Privacy", () => {})}
+          {renderSettingsItem("shield", "Privacy Policy", () => navigation.navigate("PrivacyPolicy"))}
           {renderSettingsItem("help-circle", "Help & Support", () => {})}
         </View>
 

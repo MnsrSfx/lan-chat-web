@@ -9,6 +9,7 @@ import OnboardingScreen from "@/screens/OnboardingScreen";
 import UserProfileScreen from "@/screens/UserProfileScreen";
 import ChatScreen from "@/screens/ChatScreen";
 import EditProfileScreen from "@/screens/EditProfileScreen";
+import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
 import CallScreen from "@/screens/CallScreen";
 import type { User } from "@shared/schema";
 
@@ -19,6 +20,7 @@ export type RootStackParamList = {
   UserProfile: { userId: string };
   Chat: { user: User };
   EditProfile: undefined;
+  PrivacyPolicy: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -75,6 +77,13 @@ export default function RootStackNavigator() {
               options={{ 
                 headerTitle: "Edit Profile",
                 presentation: "modal",
+              }}
+            />
+            <Stack.Screen
+              name="PrivacyPolicy"
+              component={PrivacyPolicyScreen}
+              options={{ 
+                headerTitle: "Privacy Policy",
               }}
             />
           </>

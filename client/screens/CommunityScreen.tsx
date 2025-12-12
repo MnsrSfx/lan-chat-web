@@ -168,7 +168,7 @@ export default function CommunityScreen() {
       <View style={styles.userCardContent}>
         <View style={styles.avatarContainer}>
           <Image source={getAvatarSource(item)} style={styles.avatar} />
-          {(isUserOnline(item.id) || item.isOnline) && <View style={[styles.onlineIndicator, { backgroundColor: theme.online }]} />}
+          {isUserOnline(item.id) && <View style={[styles.onlineIndicator, { backgroundColor: theme.online }]} />}
         </View>
 
         <View style={styles.userInfo}>

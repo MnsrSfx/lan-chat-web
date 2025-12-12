@@ -21,6 +21,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCall } from "@/contexts/CallContext";
+import { usePresence } from "@/contexts/PresenceContext";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 import { getApiUrl } from "@/lib/query-client";
@@ -41,6 +42,7 @@ export default function ChatScreen() {
   const { theme } = useTheme();
   const { token, user: currentUser } = useAuth();
   const { initiateCall } = useCall();
+  const { isUserOnline } = usePresence();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ChatRouteProp>();
   const queryClient = useQueryClient();
@@ -62,7 +64,7 @@ export default function ChatScreen() {
           <Image source={getAvatarSource(chatUser)} style={styles.headerAvatar} />
           <View>
             <ThemedText style={styles.headerName}>{chatUser.name}</ThemedText>
-            {chatUser.isOnline && (
+            {isUserOnline(chatUser.id) && (
               <ThemedText style={[styles.headerStatus, { color: theme.online }]}>Online</ThemedText>
             )}
           </View>
@@ -85,7 +87,7 @@ export default function ChatScreen() {
         </View>
       ),
     });
-  }, [navigation, chatUser, theme, initiateCall]);
+  }, [navigation, chatUser, theme, initiateCall, isUserOnline]);
 
   const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey: ["/api/messages", chatUser.id],
@@ -406,6 +408,7 @@ const styles = StyleSheet.create({
   messageList: {
     padding: Spacing.lg,
     flexGrow: 1,
+    justifyContent: "flex-end",
   },
   messageRow: {
     flexDirection: "row",
