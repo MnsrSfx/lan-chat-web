@@ -43,6 +43,8 @@ export const messages = pgTable("messages", {
   senderId: varchar("sender_id").notNull().references(() => users.id),
   receiverId: varchar("receiver_id").notNull().references(() => users.id),
   content: text("content").notNull(),
+  messageType: text("message_type").default("text"),
+  audioDuration: integer("audio_duration"),
   createdAt: timestamp("created_at").defaultNow(),
   isReported: boolean("is_reported").default(false),
 });

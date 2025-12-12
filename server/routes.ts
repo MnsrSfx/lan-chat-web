@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/messages", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
-      const { receiverId, content } = req.body;
+      const { receiverId, content, messageType, audioDuration } = req.body;
       
       if (!receiverId || !content) {
         return res.status(400).json({ error: "Receiver ID and content are required" });
@@ -220,9 +220,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Cannot send message to this user" });
       }
 
-      const message = await storage.createMessage(req.userId!, receiverId, content);
+      const message = await storage.createMessage(req.userId!, receiverId, content, messageType, audioDuration);
       
-      sendNewMessageNotification(req.userId!, receiverId, content).catch((err) => {
+      const notificationContent = messageType === "voice" ? "Sent a voice message" : content;
+      sendNewMessageNotification(req.userId!, receiverId, notificationContent).catch((err) => {
         console.error("Failed to send push notification:", err);
       });
       

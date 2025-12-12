@@ -26,7 +26,7 @@ export interface IStorage {
   getUsers(filters?: UserFilters): Promise<User[]>;
   
   getMessages(userId1: string, userId2: string): Promise<Message[]>;
-  createMessage(senderId: string, receiverId: string, content: string): Promise<Message>;
+  createMessage(senderId: string, receiverId: string, content: string, messageType?: string, audioDuration?: number): Promise<Message>;
   getConversations(userId: string): Promise<{ user: User; lastMessage: Message }[]>;
   reportMessage(messageId: string, reporterId: string, reason?: string): Promise<Report>;
   
@@ -151,11 +151,13 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(messages.createdAt);
   }
 
-  async createMessage(senderId: string, receiverId: string, content: string): Promise<Message> {
+  async createMessage(senderId: string, receiverId: string, content: string, messageType?: string, audioDuration?: number): Promise<Message> {
     const [message] = await db.insert(messages).values({
       senderId,
       receiverId,
       content,
+      messageType: messageType || "text",
+      audioDuration: audioDuration || null,
     }).returning();
     return message;
   }

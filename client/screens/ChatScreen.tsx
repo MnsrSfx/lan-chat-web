@@ -16,6 +16,8 @@ import { useNavigation, useRoute, type RouteProp } from "@react-navigation/nativ
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
+import * as FileSystem from "expo-file-system";
+import { useAudioRecorder, AudioModule, useAudioPlayer, RecordingPresets, setAudioModeAsync } from "expo-audio";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
@@ -53,6 +55,20 @@ export default function ChatScreen() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activePlayerRef = useRef<{ pause: () => void } | null>(null);
+
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
+  useEffect(() => {
+    if (Platform.OS !== "web") {
+      setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+    }
+  }, []);
 
   useEffect(() => {
     navigation.setOptions({
@@ -103,14 +119,19 @@ export default function ChatScreen() {
   });
 
   const sendMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async (data: { content: string; messageType?: string; audioDuration?: number }) => {
       const response = await fetch(new URL("/api/messages", getApiUrl()).toString(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ receiverId: chatUser.id, content }),
+        body: JSON.stringify({ 
+          receiverId: chatUser.id, 
+          content: data.content,
+          messageType: data.messageType || "text",
+          audioDuration: data.audioDuration,
+        }),
       });
       if (!response.ok) throw new Error("Failed to send message");
       return response.json();
@@ -221,17 +242,191 @@ export default function ChatScreen() {
 
   const handleSend = () => {
     if (message.trim()) {
-      sendMutation.mutate(message.trim());
+      sendMutation.mutate({ content: message.trim() });
     }
+  };
+
+  const startRecording = async () => {
+    if (Platform.OS === "web") {
+      Alert.alert("Voice Messages", "Voice messages work best in the Expo Go app.");
+      return;
+    }
+
+    try {
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) {
+        Alert.alert("Permission Required", "Please grant microphone access to send voice messages.");
+        return;
+      }
+
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+
+      setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      Alert.alert("Error", "Failed to start recording.");
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    const duration = recordingDuration;
+    setIsRecording(false);
+    setRecordingDuration(0);
+
+    try {
+      await audioRecorder.stop();
+      const uri = audioRecorder.uri;
+
+      if (uri && duration >= 1) {
+        await uploadAndSendVoiceMessage(uri, duration);
+      } else if (!uri) {
+        console.warn("No recording URI available");
+      }
+    } catch (error) {
+      console.error("Failed to stop recording:", error);
+    }
+  };
+
+  const cancelRecording = async () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    try {
+      await audioRecorder.stop();
+    } catch {}
+
+    setIsRecording(false);
+    setRecordingDuration(0);
+  };
+
+  const uploadAndSendVoiceMessage = async (uri: string, duration: number) => {
+    setIsUploadingAudio(true);
+    try {
+      const uploadUrlResponse = await fetch(
+        new URL("/api/objects/upload", getApiUrl()).toString(),
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!uploadUrlResponse.ok) throw new Error("Failed to get upload URL");
+      const { uploadURL } = await uploadUrlResponse.json();
+
+      const uploadResult = await FileSystem.uploadAsync(uploadURL, uri, {
+        httpMethod: "PUT",
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        headers: { "Content-Type": "audio/m4a" },
+      });
+
+      if (uploadResult.status !== 200) throw new Error("Upload failed");
+
+      const audioPath = new URL(uploadURL).pathname;
+      
+      await sendMutation.mutateAsync({
+        content: audioPath,
+        messageType: "voice",
+        audioDuration: duration,
+      });
+    } catch (error) {
+      console.error("Voice message upload error:", error);
+      Alert.alert("Error", "Failed to send voice message.");
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const formatTime = (date: Date | string) => {
     return new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const AudioMessagePlayer = ({ msg, isSent }: { msg: Message; isSent: boolean }) => {
+    const audioUrl = msg.content.startsWith("/objects/") 
+      ? new URL(msg.content, getApiUrl()).toString()
+      : new URL(`/objects/${msg.content}`, getApiUrl()).toString();
+    
+    const player = useAudioPlayer(audioUrl);
+    const isPlaying = playingMessageId === msg.id && player.playing;
+
+    const togglePlayback = async () => {
+      if (Platform.OS === "web") {
+        Alert.alert("Voice Messages", "Voice playback works best in the Expo Go app.");
+        return;
+      }
+
+      if (isPlaying) {
+        player.pause();
+        activePlayerRef.current = null;
+        setPlayingMessageId(null);
+      } else {
+        if (activePlayerRef.current) {
+          activePlayerRef.current.pause();
+        }
+        activePlayerRef.current = player;
+        setPlayingMessageId(msg.id);
+        player.play();
+      }
+    };
+
+    useEffect(() => {
+      if (player.status === "idle" && playingMessageId === msg.id) {
+        activePlayerRef.current = null;
+        setPlayingMessageId(null);
+      }
+    }, [player.status, msg.id]);
+
+    return (
+      <View style={styles.audioMessage}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.playButton,
+            { backgroundColor: isSent ? "rgba(255,255,255,0.2)" : theme.primary + "20", opacity: pressed ? 0.7 : 1 },
+          ]}
+          onPress={togglePlayback}
+        >
+          <Feather 
+            name={isPlaying ? "pause" : "play"} 
+            size={18} 
+            color={isSent ? "#FFFFFF" : theme.primary} 
+          />
+        </Pressable>
+        <View style={styles.audioInfo}>
+          <View style={[styles.audioWaveform, { backgroundColor: isSent ? "rgba(255,255,255,0.3)" : theme.primary + "30" }]} />
+          <ThemedText style={[styles.audioDuration, { color: isSent ? "rgba(255,255,255,0.8)" : theme.textSecondary }]}>
+            {formatDuration(msg.audioDuration || 0)}
+          </ThemedText>
+        </View>
+      </View>
+    );
+  };
+
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
     const isSent = item.senderId === currentUser?.id;
     const showAvatar = !isSent && (index === 0 || messages[index - 1]?.senderId !== item.senderId);
+    const isVoiceMessage = item.messageType === "voice";
 
     return (
       <Pressable
@@ -249,11 +444,16 @@ export default function ChatScreen() {
             isSent
               ? { backgroundColor: theme.messageSent }
               : { backgroundColor: theme.messageReceived },
+            isVoiceMessage && styles.voiceMessageBubble,
           ]}
         >
-          <ThemedText style={[styles.messageText, isSent && { color: "#FFFFFF" }]}>
-            {item.content}
-          </ThemedText>
+          {isVoiceMessage ? (
+            <AudioMessagePlayer msg={item} isSent={isSent} />
+          ) : (
+            <ThemedText style={[styles.messageText, isSent && { color: "#FFFFFF" }]}>
+              {item.content}
+            </ThemedText>
+          )}
           <ThemedText
             style={[
               styles.messageTime,
@@ -297,29 +497,71 @@ export default function ChatScreen() {
       />
 
       <View style={[styles.inputBar, { paddingBottom: insets.bottom + Spacing.sm, backgroundColor: theme.backgroundRoot }]}>
-        <TextInput
-          style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.text }]}
-          placeholder="Type a message..."
-          placeholderTextColor={theme.textSecondary}
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={1000}
-        />
-        <Pressable
-          style={({ pressed }) => [
-            styles.sendButton,
-            { backgroundColor: theme.primary, opacity: message.trim() ? (pressed ? 0.8 : 1) : 0.5 },
-          ]}
-          onPress={handleSend}
-          disabled={!message.trim() || sendMutation.isPending}
-        >
-          {sendMutation.isPending ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Feather name="send" size={20} color="#FFFFFF" />
-          )}
-        </Pressable>
+        {isRecording ? (
+          <View style={styles.recordingBar}>
+            <Pressable
+              style={({ pressed }) => [styles.cancelRecordButton, { opacity: pressed ? 0.7 : 1 }]}
+              onPress={cancelRecording}
+            >
+              <Feather name="x" size={24} color={theme.error} />
+            </Pressable>
+            <View style={styles.recordingInfo}>
+              <View style={[styles.recordingDot, { backgroundColor: theme.error }]} />
+              <ThemedText style={[styles.recordingTime, { color: theme.error }]}>
+                {formatDuration(recordingDuration)}
+              </ThemedText>
+            </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.sendButton,
+                { backgroundColor: theme.primary, opacity: pressed ? 0.8 : 1 },
+              ]}
+              onPress={stopRecording}
+            >
+              <Feather name="send" size={20} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <Pressable
+              style={({ pressed }) => [
+                styles.micButton,
+                { backgroundColor: theme.inputBackground, opacity: pressed ? 0.7 : 1 },
+              ]}
+              onPress={startRecording}
+              disabled={isUploadingAudio}
+            >
+              {isUploadingAudio ? (
+                <ActivityIndicator size="small" color={theme.primary} />
+              ) : (
+                <Feather name="mic" size={20} color={theme.primary} />
+              )}
+            </Pressable>
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.text }]}
+              placeholder="Type a message..."
+              placeholderTextColor={theme.textSecondary}
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              maxLength={1000}
+            />
+            <Pressable
+              style={({ pressed }) => [
+                styles.sendButton,
+                { backgroundColor: theme.primary, opacity: message.trim() ? (pressed ? 0.8 : 1) : 0.5 },
+              ]}
+              onPress={handleSend}
+              disabled={!message.trim() || sendMutation.isPending}
+            >
+              {sendMutation.isPending ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Feather name="send" size={20} color="#FFFFFF" />
+              )}
+            </Pressable>
+          </>
+        )}
       </View>
 
       <Modal visible={showContextMenu} animationType="fade" transparent>
@@ -501,5 +743,62 @@ const styles = StyleSheet.create({
   },
   contextMenuText: {
     ...Typography.body,
+  },
+  voiceMessageBubble: {
+    minWidth: 180,
+  },
+  audioMessage: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  playButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  audioInfo: {
+    flex: 1,
+    gap: Spacing.xs,
+  },
+  audioWaveform: {
+    height: 4,
+    borderRadius: 2,
+  },
+  audioDuration: {
+    ...Typography.caption,
+  },
+  micButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recordingBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  cancelRecordButton: {
+    padding: Spacing.sm,
+  },
+  recordingInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  recordingTime: {
+    ...Typography.body,
+    fontWeight: "600",
   },
 });
