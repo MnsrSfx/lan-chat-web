@@ -112,9 +112,20 @@ export default function ChatsScreen() {
             {formatTime(item.lastMessage.createdAt!)}
           </ThemedText>
         </View>
-        <ThemedText style={[styles.lastMessage, { color: theme.textSecondary }]} numberOfLines={1}>
-          {item.lastMessage.content}
-        </ThemedText>
+        <View style={styles.lastMessageRow}>
+          {item.lastMessage.messageType === "voice" ? (
+            <>
+              <Feather name="mic" size={14} color={theme.textSecondary} style={styles.voiceIcon} />
+              <ThemedText style={[styles.lastMessage, { color: theme.textSecondary }]} numberOfLines={1}>
+                Voice message
+              </ThemedText>
+            </>
+          ) : (
+            <ThemedText style={[styles.lastMessage, { color: theme.textSecondary }]} numberOfLines={1}>
+              {item.lastMessage.content}
+            </ThemedText>
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -219,8 +230,16 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     marginLeft: Spacing.sm,
   },
+  lastMessageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  voiceIcon: {
+    marginRight: Spacing.xs,
+  },
   lastMessage: {
     ...Typography.small,
+    flex: 1,
   },
   emptyContainer: {
     alignItems: "center",
