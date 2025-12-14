@@ -1,11 +1,11 @@
 {
-  "id": "638fc453-b3a2-494c-be06-e6febda56834",
-  "createdAt": "2025-12-10T03:50:11.009Z",
+  "id": "95f40ea5-04d2-4eb0-afc5-0b389fa988b2",
+  "createdAt": "2025-12-14T11:15:28.408Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1765338611009-28816",
+    "key": "bundle-1765710928408-1526",
     "contentType": "application/javascript",
-    "url": "https://6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/1765338611009-28816/_expo/static/js/ios/bundle.js"
+    "url": "https://6fa76579-208f-4c40-b8bc-d85a529c8eb1-00-3upzvtoqamuct.picard.replit.dev/1765710928408-1526/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -100,6 +100,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/lanchat-cd947f0a-db9d-4979-9dc8-aa7bd50432fb"
+    "scopeKey": "@anonymous/lanchat-e8ef93f3-bcbc-4dd2-95c9-fa1f44e4d0f1"
   }
 }
