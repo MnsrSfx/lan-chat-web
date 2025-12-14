@@ -27,6 +27,9 @@ function setupCors(app: express.Application) {
       });
     }
 
+    origins.add("https://www.lanchat.site");
+    origins.add("https://lanchat.site");
+
     const origin = req.header("origin");
 
     if (origin && origins.has(origin)) {
