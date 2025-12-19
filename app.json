@@ -1,21 +1,17 @@
 {
-"expo": {
-  "name": "LanChat",
-  "slug": "lanchat",
-  "version": "1.0.0",
-  "orientation": "portrait",
-  "icon": "./assets/images/icon.png",
-  "scheme": "lanchat",
-  "userInterfaceStyle": "automatic",
-  "newArchEnabled": true,
-  "ios": {
-    "supportsTablet": true,
-    "bundleIdentifier": "com.lanchat.app"
-  },
-  "extra": {
-    "apiUrl": "https://lan-chat-web.onrender.com"
-  }
-}
+  "expo": {
+    "name": "LanChat",
+    "slug": "lanchat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "lanchat",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lanchat.app"
+    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#4A90E2",
@@ -48,6 +44,9 @@
     ],
     "experiments": {
       "reactCompiler": true
+    },
+    "extra": {
+      "apiUrl": "https://lan-chat-web.onrender.com"
     }
   }
 }
