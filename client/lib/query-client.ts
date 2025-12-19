@@ -2,21 +2,17 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 /**
  * Gets the base URL for the Express API server
- * @returns {string} The API base URL
+ * @returns {string} The API base URL (with trailing slash)
  */
 export function getApiUrl(): string {
-  // Production için Render backend URL'sini sabit kullan
+  // Production için sabit Render backend URL (sonuna / ekli)
   if (process.env.NODE_ENV === "production") {
-    return "https://lan-chat-web.onrender.com";
+    return "https://lan-chat-web.onrender.com/";
   }
 
-  // Development için (local veya Replit)
-  let host = process.env.EXPO_PUBLIC_DOMAIN;
-  if (!host) {
-    throw new Error("EXPO_PUBLIC_DOMAIN is not set in development");
-  }
-  let url = new URL(`https://${host}`);
-  return url.href;
+  // Development için EXPO_PUBLIC_DOMAIN, yoksa fallback localhost
+  let host = process.env.EXPO_PUBLIC_DOMAIN || "localhost:5000";
+  return `https://${host}/`;
 }
 
 async function throwIfResNotOk(res: Response) {
